@@ -89,3 +89,4 @@ C:\Users\Kristijan\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\
 C:\Users\Kristijan\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\runtimes\win-x64\native\e_sqlite3.dll
 C:\Users\Kristijan\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\runtimes\win-x86\native\e_sqlite3.dll
 C:\Users\Kristijan\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\client_app\src\config.json
+C:\Users\Kristijan\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Authentication.JwtBearer.dll

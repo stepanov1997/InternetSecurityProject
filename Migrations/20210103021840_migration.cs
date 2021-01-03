@@ -1,4 +1,5 @@
-﻿using Microsoft.EntityFrameworkCore.Migrations;
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
 
 namespace InternetSecurityProject.Migrations
 {
@@ -14,7 +15,9 @@ namespace InternetSecurityProject.Migrations
                         .Annotation("Sqlite:Autoincrement", true),
                     Username = table.Column<string>(type: "TEXT", nullable: false),
                     Password = table.Column<string>(type: "TEXT", nullable: false),
-                    Token = table.Column<string>(type: "TEXT", nullable: true)
+                    Token = table.Column<string>(type: "TEXT", nullable: true),
+                    TokenCreatedDate = table.Column<DateTime>(type: "TEXT", nullable: false),
+                    TokenExpires = table.Column<long>(type: "INTEGER", nullable: false)
                 },
                 constraints: table =>
                 {
