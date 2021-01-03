@@ -9,10 +9,13 @@ namespace InternetSecurityProject.Model
             optionsBuilder.UseSqlite("Filename=database.sqlite");
         }
         public DbSet<User> Users { get; set; }
+        public DbSet<Message> Messages { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>();
+            modelBuilder.Entity<Message>().HasOne<User>(x => x.Sender).WithMany();
+            modelBuilder.Entity<Message>().HasOne<User>(x => x.Receiver).WithMany();
         }
     }
     

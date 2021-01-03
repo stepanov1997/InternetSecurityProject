@@ -38,7 +38,7 @@ namespace InternetSecurityProject.Controllers
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            if(!await isTokenValid())
+            if(!await IsTokenValid())
                 return Unauthorized(new {Message = "Token is expired or doesn't exist."});
             
             Context context = new Context();
@@ -99,7 +99,7 @@ namespace InternetSecurityProject.Controllers
         }
 
 
-        private async Task<bool> isTokenValid()
+        private async Task<bool> IsTokenValid()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);

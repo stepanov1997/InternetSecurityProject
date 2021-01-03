@@ -3,14 +3,16 @@ using System;
 using InternetSecurityProject.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace InternetSecurityProject.Migrations
 {
     [DbContext(typeof(Context))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    [Migration("20210103135528_migration2")]
+    partial class migration2
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -31,9 +33,6 @@ namespace InternetSecurityProject.Migrations
 
                     b.Property<long>("ReceiverId")
                         .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("SeenDateTime")
-                        .HasColumnType("TEXT");
 
                     b.Property<long>("SenderId")
                         .HasColumnType("INTEGER");

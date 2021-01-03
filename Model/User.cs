@@ -21,6 +21,9 @@ namespace InternetSecurityProject.Model
             Password = Password,
             Token = Token
         };
+
+        public bool IsUserActive() => Token != null && TokenCreatedDate != null && TokenExpires!=null &&
+                                      (DateTime.Now - TokenCreatedDate).Minutes < TokenExpires;
     }
 
     public class UserViewModel
