@@ -23,24 +23,22 @@ namespace InternetSecurityProject.Controllers
     [Route("[controller]")]
     public class UserController : ControllerBase
     {
-        private readonly IConfiguration configuration;
-        private readonly JWTSettings jwtSettings;
+        private readonly IConfiguration _configuration;
+        private readonly JWTSettings _jwtSettings;
         private readonly ILogger<UserController> _logger;
 
-        public UserController(IConfiguration configuration, IOptions<JWTSettings> jwtSettings, ILogger<UserController> logger)
+        public UserController(IConfiguration configuration, 
+            IOptions<JWTSettings> jwtSettings, ILogger<UserController> logger)
         {
-            this.configuration = configuration;
-            this.jwtSettings = jwtSettings.Value;
+            _configuration = configuration;
+            _jwtSettings = jwtSettings.Value;
             _logger = logger;
         }
 
-        [Authorize]
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> Get()
         {
-            if(!await IsTokenValid())
-                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
-            
             Context context = new Context();
             return Ok(await context.Users.ToArrayAsync());
         }
@@ -64,7 +62,7 @@ namespace InternetSecurityProject.Controllers
         [Route("register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserViewModel userModel)
         {
-            var response = await UserService.RegisterUser(userModel, jwtSettings);
+            var response = await UserService.RegisterUser(userModel, _jwtSettings);
             return response switch
             {
                 string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
@@ -81,7 +79,7 @@ namespace InternetSecurityProject.Controllers
             Console.WriteLine(cert);
             X509Certificate2 cert2 = await Request.HttpContext.Connection.GetClientCertificateAsync();
             Console.WriteLine(cert2);
-            var response = await UserService.LoginUser(userModel, jwtSettings);
+            var response = await UserService.LoginUser(userModel, _jwtSettings);
             
             return response switch
             {
@@ -102,6 +100,7 @@ namespace InternetSecurityProject.Controllers
         private async Task<bool> IsTokenValid()
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
+            if (!identity.Claims.Any()) return false;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
             return success && await UserService.IsUserTokenValid(result);
         }

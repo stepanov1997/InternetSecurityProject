@@ -43,6 +43,9 @@ namespace InternetSecurityProject
             var jwtSection = Configuration.GetSection("JWTSettings");
             services.Configure<JWTSettings>(jwtSection);
             
+            var certsSettings = Configuration.GetSection("CertsSettings");
+            services.Configure<CertsSettings>(certsSettings);
+            
             //to validate the token which has been sent by clients
             var appSettings = jwtSection.Get<JWTSettings>();
             var key = Encoding.ASCII.GetBytes(appSettings.SecretKey);

@@ -9,14 +9,34 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InternetSecurityProject.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20210103141630_migration4")]
-    partial class migration4
+    [Migration("20210131153338_migration")]
+    partial class migration
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.1");
+                .HasAnnotation("ProductVersion", "5.0.2");
+
+            modelBuilder.Entity("InternetSecurityProject.Model.Certificate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long?>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("certificate");
+                });
 
             modelBuilder.Entity("InternetSecurityProject.Model.Message", b =>
                 {
@@ -75,6 +95,15 @@ namespace InternetSecurityProject.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("user");
+                });
+
+            modelBuilder.Entity("InternetSecurityProject.Model.Certificate", b =>
+                {
+                    b.HasOne("InternetSecurityProject.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId");
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("InternetSecurityProject.Model.Message", b =>

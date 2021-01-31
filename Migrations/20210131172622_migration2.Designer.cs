@@ -9,14 +9,34 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace InternetSecurityProject.Migrations
 {
     [DbContext(typeof(Context))]
-    [Migration("20210103140420_migration3")]
-    partial class migration3
+    [Migration("20210131172622_migration2")]
+    partial class migration2
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "5.0.1");
+                .HasAnnotation("ProductVersion", "5.0.2");
+
+            modelBuilder.Entity("InternetSecurityProject.Model.Certificate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("INTEGER");
+
+                    b.Property<string>("Path")
+                        .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<long>("UserId")
+                        .HasColumnType("INTEGER");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("certificate");
+                });
 
             modelBuilder.Entity("InternetSecurityProject.Model.Message", b =>
                 {
@@ -34,8 +54,8 @@ namespace InternetSecurityProject.Migrations
                     b.Property<long>("ReceiverId")
                         .HasColumnType("INTEGER");
 
-                    b.Property<bool>("Seen")
-                        .HasColumnType("INTEGER");
+                    b.Property<DateTime>("SeenDateTime")
+                        .HasColumnType("TEXT");
 
                     b.Property<long>("SenderId")
                         .HasColumnType("INTEGER");
@@ -75,6 +95,17 @@ namespace InternetSecurityProject.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("user");
+                });
+
+            modelBuilder.Entity("InternetSecurityProject.Model.Certificate", b =>
+                {
+                    b.HasOne("InternetSecurityProject.Model.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("InternetSecurityProject.Model.Message", b =>

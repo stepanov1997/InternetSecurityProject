@@ -11,11 +11,15 @@ namespace InternetSecurityProject.Model
         public DbSet<User> Users { get; set; }
         public DbSet<Message> Messages { get; set; }
         
+        public DbSet<Certificate> Certificates { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>();
-            modelBuilder.Entity<Message>().HasOne<User>(x => x.Sender).WithMany();
-            modelBuilder.Entity<Message>().HasOne<User>(x => x.Receiver).WithMany();
+            modelBuilder.Entity<Certificate>();
+            modelBuilder.Entity<Message>().HasOne(x => x.Sender).WithMany();
+            modelBuilder.Entity<Message>().HasOne(x => x.Receiver).WithMany();
+            modelBuilder.Entity<Certificate>().HasOne(x => x.User).WithMany();
         }
     }
     
