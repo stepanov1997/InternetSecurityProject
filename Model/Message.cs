@@ -18,7 +18,6 @@ namespace InternetSecurityProject.Model
         [Required]
         public DateTime DateTimeStamp { get; set; }
         public DateTime SeenDateTime { get; set; }
-
         public dynamic MapToModel()
         {
             return new

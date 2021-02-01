@@ -24,14 +24,21 @@ namespace InternetSecurityProject.Controllers
     public class UserController : ControllerBase
     {
         private readonly IConfiguration _configuration;
+        private readonly EmailSettings _emailSettings;
         private readonly JWTSettings _jwtSettings;
         private readonly ILogger<UserController> _logger;
+        private readonly IHttpContextAccessor _httpContextAccessor;
 
-        public UserController(IConfiguration configuration, 
-            IOptions<JWTSettings> jwtSettings, ILogger<UserController> logger)
+        public UserController(IConfiguration configuration,
+            IOptions<JWTSettings> jwtSettings,
+            IOptions<EmailSettings> emailSettings,
+            ILogger<UserController> logger,
+            IHttpContextAccessor httpContextAccessor)
         {
             _configuration = configuration;
+            _emailSettings = emailSettings.Value;
             _jwtSettings = jwtSettings.Value;
+            _httpContextAccessor = httpContextAccessor;
             _logger = logger;
         }
 
@@ -47,16 +54,16 @@ namespace InternetSecurityProject.Controllers
         [Route("access_denied")]
         public object AccessDenied()
         {
-            return Unauthorized(new { Message = "Access is denied, please login."});
+            return Unauthorized(new {Message = "Access is denied, please login."});
         }
-        
+
         [HttpGet]
         [Route("login")]
         public object LoginRequired()
         {
-            return Unauthorized(new { Message = "Access is denied, please login."});
+            return Unauthorized(new {Message = "Access is denied, please login."});
         }
-        
+
         [AllowAnonymous]
         [HttpPost]
         [Route("register")]
@@ -66,21 +73,24 @@ namespace InternetSecurityProject.Controllers
             return response switch
             {
                 string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
-                UserViewModel userViewModel => Ok(userViewModel),
+                User user when EmailService.SendCertificate(user, _emailSettings, _httpContextAccessor) => Ok(
+                    user.MapToModel()),
+                User user => StatusCode(StatusCodes.Status409Conflict,
+                    new {message = "Sending mail is not successfully."}),
                 _ => Conflict()
             };
         }
 
         [AllowAnonymous]
-        [HttpPost("login")]
-        public async Task<IActionResult> LoginUser([FromBody] UserViewModel userModel)
+        [HttpPost("login_part_one")]
+        public async Task<IActionResult> LoginUserPart1([FromBody] UserViewModel userModel)
         {
-            string cert = Request.Headers["X-ARR-ClientCert"];;
+            string cert = Request.Headers["X-ARR-ClientCert"];
             Console.WriteLine(cert);
-            X509Certificate2 cert2 = await Request.HttpContext.Connection.GetClientCertificateAsync();
-            Console.WriteLine(cert2);
-            var response = await UserService.LoginUser(userModel, _jwtSettings);
-            
+            /*X509Certificate2 cert2 = await Request.HttpContext.Connection.GetClientCertificateAsync();
+            Console.WriteLine(cert2);*/
+            var response = await UserService.LoginUserPart1(userModel, _jwtSettings, _emailSettings);
+
             return response switch
             {
                 string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
@@ -89,20 +99,18 @@ namespace InternetSecurityProject.Controllers
             };
         }
 
-        [Route("{id}")]
-        [HttpGet]
-        public IEnumerable<int> GetById(int id) {
-            Random random = new Random();
-            return Enumerable.Range(0, id).Select(index => random.Next(0, 10));
-        }
-
-
-        private async Task<bool> IsTokenValid()
+        [AllowAnonymous]
+        [HttpPost("login_part_two")]
+        public async Task<IActionResult> LoginUserPart2([FromBody] UserViewModel userModel)
         {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            if (!identity.Claims.Any()) return false;
-            var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
-            return success && await UserService.IsUserTokenValid(result);
+            var response = await UserService.LoginUserPart2(userModel, _jwtSettings, _emailSettings);
+
+            return response switch
+            {
+                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
+                UserViewModel userViewModel => Ok(userViewModel),
+                _ => Conflict()
+            };
         }
     }
 }

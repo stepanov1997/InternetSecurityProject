@@ -3,14 +3,16 @@ using System;
 using InternetSecurityProject.Model;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 namespace InternetSecurityProject.Migrations
 {
     [DbContext(typeof(Context))]
-    partial class ContextModelSnapshot : ModelSnapshot
+    [Migration("20210131185205_migration3")]
+    partial class migration3
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -65,34 +67,6 @@ namespace InternetSecurityProject.Migrations
                     b.HasIndex("SenderId");
 
                     b.ToTable("message");
-                });
-
-            modelBuilder.Entity("InternetSecurityProject.Model.Tfa", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("INTEGER");
-
-                    b.Property<DateTime>("FirstFactorTime")
-                        .HasColumnType("TEXT");
-
-                    b.Property<bool>("IsCertificateOk")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsPasswordOk")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<bool>("IsTokenOk")
-                        .HasColumnType("INTEGER");
-
-                    b.Property<long>("UserId")
-                        .HasColumnType("INTEGER");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("UserId");
-
-                    b.ToTable("tfa");
                 });
 
             modelBuilder.Entity("InternetSecurityProject.Model.User", b =>
@@ -155,17 +129,6 @@ namespace InternetSecurityProject.Migrations
                     b.Navigation("Receiver");
 
                     b.Navigation("Sender");
-                });
-
-            modelBuilder.Entity("InternetSecurityProject.Model.Tfa", b =>
-                {
-                    b.HasOne("InternetSecurityProject.Model.User", "User")
-                        .WithMany()
-                        .HasForeignKey("UserId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("User");
                 });
 #pragma warning restore 612, 618
         }

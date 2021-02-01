@@ -16,6 +16,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Options;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
+using Org.BouncyCastle.Ocsp;
 
 namespace InternetSecurityProject.Controllers
 {
@@ -23,37 +24,52 @@ namespace InternetSecurityProject.Controllers
     [Route("[controller]")]
     public class ChatController : ControllerBase
     {
-        private readonly IConfiguration configuration;
-        private readonly JWTSettings jwtSettings;
+        private readonly IConfiguration _configuration;
+        private readonly JWTSettings _jwtSettings;
         private readonly ILogger<ChatController> _logger;
 
         public ChatController(IConfiguration configuration, IOptions<JWTSettings> jwtSettings,
             ILogger<ChatController> logger)
         {
-            this.configuration = configuration;
-            this.jwtSettings = jwtSettings.Value;
+            _configuration = configuration;
+            _jwtSettings = jwtSettings.Value;
             _logger = logger;
         }
 
         [Authorize]
         [HttpGet]
         [Route("active")]
-        public async Task<IActionResult> GetActiveUsers() =>
-            Ok((await new Context().Users.ToListAsync()).Where(x => x.IsUserActive()).Select(x => new
+        public async Task<IActionResult> GetActiveUsers()
+        {
+            bool isTokenValid = await UserService.IsTokenValid(HttpContext.User.Identity as ClaimsIdentity);
+            if (!isTokenValid)
+            {
+                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+            }
+
+            return Ok((await new Context().Users.ToListAsync()).Where(x => x.IsUserActive()).Select(x => new
             {
                 username = x.Username
             }));
+        }
 
         [Authorize]
         [HttpGet]
         [Route("inactive")]
-        public async Task<IActionResult> GetInactiveUsers() =>
-            Ok((await new Context().Users.ToListAsync()).Where(x => !x.IsUserActive()).Select(x => new
+        public async Task<IActionResult> GetInactiveUsers()
+        {
+            bool isTokenValid = await UserService.IsTokenValid(HttpContext.User.Identity as ClaimsIdentity);
+            if (!isTokenValid)
+            {
+                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+            }
+
+            return Ok((await new Context().Users.ToListAsync()).Where(x => !x.IsUserActive()).Select(x => new
             {
                 username = x.Username
             }));
+        }
 
-        
         [Authorize]
         [HttpPost]
         [Route("messages")]
@@ -61,10 +77,10 @@ namespace InternetSecurityProject.Controllers
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
-            if(!success || !await UserService.IsUserTokenValid(result))
+            if (!success || !await UserService.IsUserTokenValid(result))
                 return Unauthorized(new {Message = "Token is expired or doesn't exist."});
-            
-            
+
+
             Context context = new Context();
             var messages = (await context.Messages
                 .Join(context.Users,
@@ -81,14 +97,40 @@ namespace InternetSecurityProject.Controllers
                     {
                         Message = message.Message, Sender = message.User, Receiver = user
                     })
-                .Where(x => (x.Sender.Id == result || x.Sender.Username == receiver) && 
-                                            (x.Receiver.Username == receiver || x.Receiver.Id==result))
+                .Where(x => (x.Sender.Id == result || x.Sender.Username == receiver) &&
+                            (x.Receiver.Username == receiver || x.Receiver.Id == result))
                 .ToListAsync())
-                .Select(x=>x.Message.MapToModel());
-            return Ok(messages);
+                .Select(elem => new
+                {
+                    Sender = elem.Sender,
+                    Receiver = elem.Receiver,
+                    Message = elem.Message,
+                    IsDdos = DefenceService.IsDdosAttack(elem.Receiver),
+                    IsSqlInjection = DefenceService.IsSqlInjectionAttack(elem.Message.Content),
+                    IsXss = DefenceService.IsXssAttack(elem.Message.Content)
+                })
+                .ToList();
+
+            if (messages.Any(msg => msg.IsXss || msg.IsSqlInjection || msg.IsDdos.Result))
+            {
+                return BadRequest(messages.Select(elem => new MessageModel
+                {
+                    Sender = elem.Sender.Username,
+                    Receiver = elem.Receiver.Username,
+                    Content = elem.IsXss?"Xss attack...":
+                        elem.IsSqlInjection?"Sql injection...":
+                        elem.Message.Content
+                }));
+            }
+            return Ok(messages.Select(elem => new MessageModel
+            {
+                Sender = elem.Sender.Username,
+                Receiver = elem.Receiver.Username,
+                Content = elem.Message.Content
+            }));
         }
-        
-        
+
+
         [Authorize]
         [HttpPost]
         [Route("messages/send")]
@@ -96,28 +138,30 @@ namespace InternetSecurityProject.Controllers
         {
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
-            if(!success || !await UserService.IsUserTokenValid(result))
+            if (!success || !await UserService.IsUserTokenValid(result))
                 return Unauthorized(new {Message = "Token is expired or doesn't exist."});
-            
+
             Context context = new Context();
-            User receiver = await context.Users.FirstOrDefaultAsync(x => x.Username == messageModel.Receiver.ToString());
+            User receiver =
+                await context.Users.FirstOrDefaultAsync(x => x.Username == messageModel.Receiver.ToString());
             User sender = await context.Users.FirstOrDefaultAsync(x => x.Id == result);
 
             if (sender == null || receiver == null)
             {
-                return StatusCode(StatusCodes.Status400BadRequest, new {Message = "Sender or receiver not found in request"});
+                return StatusCode(StatusCodes.Status400BadRequest,
+                    new {Message = "Sender or receiver not found in request"});
             }
+
             Message message = new Message
             {
                 Content = messageModel.Content,
                 DateTimeStamp = DateTime.Now,
                 Sender = sender,
-                Receiver = receiver
+                Receiver = receiver,
             };
-
             await context.Messages.AddAsync(message);
             await context.SaveChangesAsync();
-            
+
             return Ok(message);
         }
 
@@ -127,14 +171,6 @@ namespace InternetSecurityProject.Controllers
         {
             Random random = new Random();
             return Enumerable.Range(0, id).Select(index => random.Next(0, 10));
-        }
-
-
-        private async Task<bool> IsTokenValid()
-        {
-            var identity = HttpContext.User.Identity as ClaimsIdentity;
-            var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
-            return success && await UserService.IsUserTokenValid(result);
         }
     }
 }

@@ -46,6 +46,9 @@ namespace InternetSecurityProject
             var certsSettings = Configuration.GetSection("CertsSettings");
             services.Configure<CertsSettings>(certsSettings);
             
+            var emailSettings = Configuration.GetSection("EmailSettings");
+            services.Configure<EmailSettings>(emailSettings);
+            
             //to validate the token which has been sent by clients
             var appSettings = jwtSection.Get<JWTSettings>();
             var key = Encoding.ASCII.GetBytes(appSettings.SecretKey);
@@ -64,6 +67,7 @@ namespace InternetSecurityProject
                     };
                 });
 
+            services.AddSingleton<IHttpContextAccessor, HttpContextAccessor>();
             services.AddMvc();
             services.AddEntityFrameworkSqlite().AddDbContext<Context>();
             services.AddCors();

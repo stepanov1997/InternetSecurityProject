@@ -13,6 +13,8 @@ namespace InternetSecurityProject.Model
         
         public DbSet<Certificate> Certificates { get; set; }
         
+        public DbSet<Tfa> Tfas { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>();
@@ -20,6 +22,7 @@ namespace InternetSecurityProject.Model
             modelBuilder.Entity<Message>().HasOne(x => x.Sender).WithMany();
             modelBuilder.Entity<Message>().HasOne(x => x.Receiver).WithMany();
             modelBuilder.Entity<Certificate>().HasOne(x => x.User).WithMany();
+            modelBuilder.Entity<Tfa>().HasOne(x => x.User).WithMany();
         }
     }
     

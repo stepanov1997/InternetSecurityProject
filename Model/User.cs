@@ -11,6 +11,7 @@ namespace InternetSecurityProject.Model
         [Key] public long Id { get; set; }
         [Required] public string Username { get; set; }
         [Required] public string Password { get; set; }
+        [Required] public string Email { get; set; }
         public string Token { get; set; }
         public DateTime TokenCreatedDate { get; set; } 
         public Minutes TokenExpires { get; set; } = 15;
@@ -28,20 +29,18 @@ namespace InternetSecurityProject.Model
 
     public class UserViewModel
     {
-        [Required(ErrorMessage = "Please provide username.")]
-        [Display(Name = "Username")]
         public string Username { get; set; }
 
-        [Required(ErrorMessage = "Please enter password")]
-        [Display(Name = "Password")]
         public string Password { get; set; }
 
+        public string Email { get; set; }
         public string Token { get; set; }
 
         public User MapToUser() => new()
         {
             Username = Username,
             Password = Password,
+            Email = Email,
             Token = Token
         };
     }

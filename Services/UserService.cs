@@ -5,6 +5,7 @@ using System.Security.Claims;
 using System.Text;
 using System.Threading.Tasks;
 using InternetSecurityProject.Model;
+using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
@@ -13,7 +14,7 @@ namespace InternetSecurityProject.Services
 {
     public static class UserService
     {
-        public static async Task<object> LoginUser(UserViewModel userModel, JWTSettings jwtSettings)
+        public static async Task<object> LoginUserPart1(UserViewModel userModel, JWTSettings jwtSettings, EmailSettings emailSettings)
         {
             if (userModel.Username.Length < 8 || userModel.Password.Length < 8)
             {
@@ -21,13 +22,54 @@ namespace InternetSecurityProject.Services
             }
 
             Context context = new Context();
-            User found = await context.Users.FirstOrDefaultAsync(u => u.Username == userModel.Username);
+            User found = await context.Users.FirstOrDefaultAsync(u => u.Username == userModel.Username && u.Password==userModel.Password);
             if (found==null) return "User with that username does not exists.";
 
             found.Token = GenerateAccessToken(found.Id, jwtSettings);
             found.TokenCreatedDate = DateTime.Now;
             found.TokenExpires = 15;
+            await context.SaveChangesAsync();
+
+            Tfa tfa = await context.Tfas.FirstOrDefaultAsync(tfa => tfa.User.Username == found.Username);
+            if (tfa == null)
+            {
+                tfa = new Tfa {
+                    User = found,
+                    FirstFactorTime = DateTime.Now,
+                    IsCertificateOk = true,
+                    IsPasswordOk = true,
+                    IsTokenOk = false
+                };
+                await context.Tfas.AddAsync(tfa);
+            }
+            else
+            {
+                tfa.IsCertificateOk = true;
+                tfa.IsPasswordOk = true;
+                tfa.IsTokenOk = false;
+            }
+
+            await context.SaveChangesAsync();
             
+            if (!EmailService.SendToken(found, emailSettings))
+            {
+                return "User doesn't have valid email adress.";
+            }
+            return found.MapToModel();
+        }
+
+        public static async Task<object> LoginUserPart2(UserViewModel userModel, JWTSettings jwtSettings, EmailSettings emailSettings)
+        {
+            Context context = new Context();
+            User found = await context.Users.FirstOrDefaultAsync(u => u.Token == userModel.Token);
+            if (found==null) return "Invalid token.";
+
+            Tfa tfa = await context.Tfas.FirstOrDefaultAsync(tfa => tfa.User.Username == found.Username);
+            if (tfa == null || !(tfa.IsPasswordOk && tfa.IsCertificateOk))
+            {
+                return "Log with username and password first";
+            }
+            context.Tfas.Remove(tfa);
             await context.SaveChangesAsync();
             
             return found.MapToModel();
@@ -71,7 +113,7 @@ namespace InternetSecurityProject.Services
             await context.Users.AddAsync(user);
             await context.SaveChangesAsync();
             
-            return userModel;
+            return user;
         }
 
         public static async Task<bool> IsUserTokenValid(long userId)
@@ -86,6 +128,14 @@ namespace InternetSecurityProject.Services
             if (DateTime.Now < foundUser.TokenCreatedDate) return false;
             
             return (DateTime.Now - foundUser.TokenCreatedDate).Minutes < foundUser.TokenExpires;
+        }
+        
+        
+        public static async Task<bool> IsTokenValid(ClaimsIdentity identity)
+        {
+            if (!identity.Claims.Any()) return false;
+            var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
+            return success && await UserService.IsUserTokenValid(result);
         }
     }
 }
