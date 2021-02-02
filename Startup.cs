@@ -17,6 +17,8 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Authentication.Certificate;
+using System.Security.Cryptography.X509Certificates;
 
 namespace InternetSecurityProject
 {
@@ -32,27 +34,19 @@ namespace InternetSecurityProject
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            // services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
-            //     .AddCookie(CookieAuthenticationDefaults.AuthenticationScheme,
-            //         options =>
-            //         {
-            //             options.LoginPath = new PathString("/user/login");
-            //             options.AccessDeniedPath = new PathString("/user/access_denied");
-            //         });
-
             var jwtSection = Configuration.GetSection("JWTSettings");
             services.Configure<JWTSettings>(jwtSection);
-            
+
             var certsSettings = Configuration.GetSection("CertsSettings");
             services.Configure<CertsSettings>(certsSettings);
-            
+
             var emailSettings = Configuration.GetSection("EmailSettings");
             services.Configure<EmailSettings>(emailSettings);
-            
+
             //to validate the token which has been sent by clients
             var appSettings = jwtSection.Get<JWTSettings>();
             var key = Encoding.ASCII.GetBytes(appSettings.SecretKey);
-            
+
             services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
@@ -83,7 +77,7 @@ namespace InternetSecurityProject
                 .SetIsOriginAllowed((host) => true)
                 .AllowCredentials()
             );
-            
+
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
@@ -95,6 +89,7 @@ namespace InternetSecurityProject
 
             app.UseAuthentication();
             app.UseAuthorization();
+            app.UseCertificateForwarding();
 
             app.UseEndpoints(endpoints =>
             {

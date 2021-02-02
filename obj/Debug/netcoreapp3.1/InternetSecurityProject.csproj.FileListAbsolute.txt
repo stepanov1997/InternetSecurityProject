@@ -6,7 +6,6 @@ C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Inte
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\InternetSecurityProject.runtimeconfig.dev.json
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\InternetSecurityProject.dll
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\InternetSecurityProject.pdb
-C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.csprojAssemblyReference.cache
 C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.AssemblyInfoInputs.cache
 C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.AssemblyInfo.cs
 C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.csproj.CoreCompileInputs.cache
@@ -96,3 +95,7 @@ C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Huma
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\MailKit.dll
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\MimeKit.dll
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\BouncyCastle.Crypto.dll
+C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Authentication.Certificate.dll
+C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.csprojAssemblyReference.cache
+C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Server.Kestrel.Https.dll
+C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Server.Kestrel.Transport.Abstractions.dll

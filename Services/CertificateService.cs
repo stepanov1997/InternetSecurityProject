@@ -35,7 +35,7 @@ namespace InternetSecurityProject.Services
             }
 
             // Do if not exists
-            X509Certificate2 userCertificate = CertCreateNew(user.Username,
+            X509Certificate2 userCertificate = CertCreateNew(user.Username, user.Email,
                 certsSettings.CA_cert, certsSettings.CA_password, certsSettings.ClientPassword);
 
             byte[] p12 = userCertificate.Export(X509ContentType.Pfx, certsSettings.ClientPassword);
@@ -50,7 +50,7 @@ namespace InternetSecurityProject.Services
             return certificate;
         }
 
-        public static X509Certificate2 CertCreateNew(string subjectName, string caPath, string caPassword,
+        public static X509Certificate2 CertCreateNew(string subjectName, string email, string caPath, string caPassword,
             string clientPass)
         {
             X509Certificate2 caCert = new X509Certificate2(caPath, caPassword, X509KeyStorageFlags.MachineKeySet |
@@ -59,7 +59,7 @@ namespace InternetSecurityProject.Services
             RSA rsa = RSA.Create(2048);
 
             CertificateRequest req = new CertificateRequest(
-                $@"CN={subjectName}",
+                $@"C=BA/ O=ETFBL/ OU=ETFBL/ CN={subjectName}",
                 rsa,
                 HashAlgorithmName.SHA256,
                 RSASignaturePadding.Pkcs1);
@@ -69,7 +69,7 @@ namespace InternetSecurityProject.Services
 
             req.CertificateExtensions.Add(
                 new X509KeyUsageExtension(
-                    X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation,
+                    X509KeyUsageFlags.DigitalSignature | X509KeyUsageFlags.NonRepudiation | X509KeyUsageFlags.KeyAgreement,
                     false));
 
             req.CertificateExtensions.Add(

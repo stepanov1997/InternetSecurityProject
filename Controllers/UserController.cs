@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
+using System.IO;
 using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography.X509Certificates;
@@ -54,14 +55,14 @@ namespace InternetSecurityProject.Controllers
         [Route("access_denied")]
         public object AccessDenied()
         {
-            return Unauthorized(new {Message = "Access is denied, please login."});
+            return Unauthorized(new { Message = "Access is denied, please login." });
         }
 
         [HttpGet]
         [Route("login")]
         public object LoginRequired()
         {
-            return Unauthorized(new {Message = "Access is denied, please login."});
+            return Unauthorized(new { Message = "Access is denied, please login." });
         }
 
         [AllowAnonymous]
@@ -72,28 +73,31 @@ namespace InternetSecurityProject.Controllers
             var response = await UserService.RegisterUser(userModel, _jwtSettings);
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
+                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
                 User user when EmailService.SendCertificate(user, _emailSettings, _httpContextAccessor) => Ok(
                     user.MapToModel()),
                 User user => StatusCode(StatusCodes.Status409Conflict,
-                    new {message = "Sending mail is not successfully."}),
+                    new { message = "Sending mail is not successfully." }),
                 _ => Conflict()
             };
         }
 
         [AllowAnonymous]
         [HttpPost("login_part_one")]
-        public async Task<IActionResult> LoginUserPart1([FromBody] UserViewModel userModel)
+        public async Task<IActionResult> LoginUserPart1([FromForm] UserViewModel userModel)
         {
-            string cert = Request.Headers["X-ARR-ClientCert"];
-            Console.WriteLine(cert);
+            if (!userModel.Certificate.ValidateCertificate(userModel.Username))
+            {
+                return StatusCode(StatusCodes.Status409Conflict, new {message = "Client certificate is not valid"});
+            }
+            
             /*X509Certificate2 cert2 = await Request.HttpContext.Connection.GetClientCertificateAsync();
             Console.WriteLine(cert2);*/
             var response = await UserService.LoginUserPart1(userModel, _jwtSettings, _emailSettings);
 
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
+                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
                 UserViewModel userViewModel => Ok(userViewModel),
                 _ => Conflict()
             };
@@ -107,7 +111,7 @@ namespace InternetSecurityProject.Controllers
 
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new {message = errorMesage}),
+                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
                 UserViewModel userViewModel => Ok(userViewModel),
                 _ => Conflict()
             };

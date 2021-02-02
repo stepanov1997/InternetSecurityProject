@@ -1,6 +1,7 @@
 ﻿using System;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using Microsoft.AspNetCore.Http;
 using Minutes = System.Int64;
 
 namespace InternetSecurityProject.Model
@@ -34,6 +35,8 @@ namespace InternetSecurityProject.Model
         public string Password { get; set; }
 
         public string Email { get; set; }
+        
+        public IFormFile Certificate { get; set; } 
         public string Token { get; set; }
 
         public User MapToUser() => new()
