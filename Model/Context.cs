@@ -15,6 +15,8 @@ namespace InternetSecurityProject.Model
         
         public DbSet<Tfa> Tfas { get; set; }
         
+        public DbSet<Attack> Attacks { get; set; }
+        
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<User>();
@@ -23,6 +25,8 @@ namespace InternetSecurityProject.Model
             modelBuilder.Entity<Message>().HasOne(x => x.Receiver).WithMany();
             modelBuilder.Entity<Certificate>().HasOne(x => x.User).WithMany();
             modelBuilder.Entity<Tfa>().HasOne(x => x.User).WithMany();
+            modelBuilder.Entity<Attack>().HasOne(x => x.Attacker).WithMany();
+            modelBuilder.Entity<Attack>().HasOne(x => x.Attacked).WithMany();
         }
     }
     

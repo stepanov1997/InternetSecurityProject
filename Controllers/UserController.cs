@@ -44,28 +44,6 @@ namespace InternetSecurityProject.Controllers
         }
 
         [AllowAnonymous]
-        [HttpGet]
-        public async Task<IActionResult> Get()
-        {
-            Context context = new Context();
-            return Ok(await context.Users.ToArrayAsync());
-        }
-
-        [HttpGet]
-        [Route("access_denied")]
-        public object AccessDenied()
-        {
-            return Unauthorized(new { Message = "Access is denied, please login." });
-        }
-
-        [HttpGet]
-        [Route("login")]
-        public object LoginRequired()
-        {
-            return Unauthorized(new { Message = "Access is denied, please login." });
-        }
-
-        [AllowAnonymous]
         [HttpPost]
         [Route("register")]
         public async Task<IActionResult> RegisterUser([FromBody] UserViewModel userModel)
@@ -73,12 +51,11 @@ namespace InternetSecurityProject.Controllers
             var response = await UserService.RegisterUser(userModel, _jwtSettings);
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
+                string errorMesage => Ok(new {status = 409, message = errorMesage}),
                 User user when EmailService.SendCertificate(user, _emailSettings, _httpContextAccessor) => Ok(
                     user.MapToModel()),
-                User user => StatusCode(StatusCodes.Status409Conflict,
-                    new { message = "Sending mail is not successfully." }),
-                _ => Conflict()
+                User user => Ok(new {status = 409, message = "Sending mail is not successfully."}),
+                _ => Ok(new {status = 409, message = "Error"})
             };
         }
 
@@ -88,18 +65,16 @@ namespace InternetSecurityProject.Controllers
         {
             if (!userModel.Certificate.ValidateCertificate(userModel.Username))
             {
-                return StatusCode(StatusCodes.Status409Conflict, new {message = "Client certificate is not valid"});
+                return Ok(new {status = 409, message = "Client certificate is not valid"});
             }
-            
-            /*X509Certificate2 cert2 = await Request.HttpContext.Connection.GetClientCertificateAsync();
-            Console.WriteLine(cert2);*/
+
             var response = await UserService.LoginUserPart1(userModel, _jwtSettings, _emailSettings);
 
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
-                UserViewModel userViewModel => Ok(userViewModel),
-                _ => Conflict()
+                string errorMesage => Ok(new {status = 409, message = errorMesage}),
+                UserViewModel userViewModel => Ok(new {status=200, data=userViewModel}),
+                _ => Ok(new {status = 409, message = "Error"})
             };
         }
 
@@ -111,9 +86,9 @@ namespace InternetSecurityProject.Controllers
 
             return response switch
             {
-                string errorMesage => StatusCode(StatusCodes.Status409Conflict, new { message = errorMesage }),
-                UserViewModel userViewModel => Ok(userViewModel),
-                _ => Conflict()
+                string errorMesage => Ok(new {status = 409, message = errorMesage}),
+                UserViewModel userViewModel => Ok(new {status=200, data=userViewModel}),
+                _ => Ok(new {status = 409, message = "Error"})
             };
         }
     }

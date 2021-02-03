@@ -44,13 +44,15 @@ namespace InternetSecurityProject.Controllers
             bool isTokenValid = await UserService.IsTokenValid(HttpContext.User.Identity as ClaimsIdentity);
             if (!isTokenValid)
             {
-                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+                return Ok(new {status = 401, message = "Token is expired or doesn't exist."});
             }
 
-            return Ok((await new Context().Users.ToListAsync()).Where(x => x.IsUserActive()).Select(x => new
+            return Ok(new
             {
-                username = x.Username
-            }));
+                status = 200,
+                data = (await new Context().Users.ToListAsync()).Where(x => x.IsUserActive()).Select(x =>
+                    new {username = x.Username})
+            });
         }
 
         [Authorize]
@@ -61,7 +63,7 @@ namespace InternetSecurityProject.Controllers
             bool isTokenValid = await UserService.IsTokenValid(HttpContext.User.Identity as ClaimsIdentity);
             if (!isTokenValid)
             {
-                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+                return Ok(new {status = 401, message = "Token is expired or doesn't exist."});
             }
 
             return Ok((await new Context().Users.ToListAsync()).Where(x => !x.IsUserActive()).Select(x => new
@@ -78,11 +80,16 @@ namespace InternetSecurityProject.Controllers
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
             if (!success || !await UserService.IsUserTokenValid(result))
-                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+                return Ok(new {status = 401, message = "Token is expired or doesn't exist."});
 
 
             Context context = new Context();
-            var messages = (await context.Messages
+
+            User senderUser = await context.Users.FirstOrDefaultAsync(elem => elem.Id == result);
+            User receiverUser = await context.Users.FirstOrDefaultAsync(elem => elem.Username == receiver);
+
+
+            var messages = await context.Messages
                 .Join(context.Users,
                     m => m.Sender.Id,
                     u => u.Id,
@@ -99,35 +106,24 @@ namespace InternetSecurityProject.Controllers
                     })
                 .Where(x => (x.Sender.Id == result || x.Sender.Username == receiver) &&
                             (x.Receiver.Username == receiver || x.Receiver.Id == result))
-                .ToListAsync())
-                .Select(elem => new
-                {
-                    Sender = elem.Sender,
-                    Receiver = elem.Receiver,
-                    Message = elem.Message,
-                    IsDdos = DefenceService.IsDdosAttack(elem.Receiver),
-                    IsSqlInjection = DefenceService.IsSqlInjectionAttack(elem.Message.Content),
-                    IsXss = DefenceService.IsXssAttack(elem.Message.Content)
-                })
-                .ToList();
+                .ToListAsync();
 
-            if (messages.Any(msg => msg.IsXss || msg.IsSqlInjection || msg.IsDdos.Result))
-            {
-                return BadRequest(messages.Select(elem => new MessageModel
-                {
-                    Sender = elem.Sender.Username,
-                    Receiver = elem.Receiver.Username,
-                    Content = elem.IsXss?"Xss attack...":
-                        elem.IsSqlInjection?"Sql injection...":
-                        elem.Message.Content
-                }));
-            }
-            return Ok(messages.Select(elem => new MessageModel
+            bool activeAttacksExists = await context
+                .Attacks
+                .Where(attack => (attack.Attacker.Id == senderUser.Id && attack.Attacked.Id == receiverUser.Id) ||
+                                 (attack.Attacked.Id == senderUser.Id && attack.Attacker.Id == receiverUser.Id))
+                .AnyAsync(attack => attack.Type != AttackType.None && !attack.IsRelogged);
+
+            var response = messages.Select(elem => new MessageModel
             {
                 Sender = elem.Sender.Username,
                 Receiver = elem.Receiver.Username,
                 Content = elem.Message.Content
-            }));
+            });
+
+            return activeAttacksExists
+                ? Ok(new {status = 503, data = response})
+                : Ok(new {status = 200, data = response});
         }
 
 
@@ -139,22 +135,66 @@ namespace InternetSecurityProject.Controllers
             var identity = HttpContext.User.Identity as ClaimsIdentity;
             var success = long.TryParse(identity?.Claims.ToList()[0].Value, out var result);
             if (!success || !await UserService.IsUserTokenValid(result))
-                return Unauthorized(new {Message = "Token is expired or doesn't exist."});
+                return Ok(new {status = 401, message = "Token is expired or doesn't exist."});
 
             Context context = new Context();
             User receiver =
                 await context.Users.FirstOrDefaultAsync(x => x.Username == messageModel.Receiver.ToString());
             User sender = await context.Users.FirstOrDefaultAsync(x => x.Id == result);
 
+            bool activeAttacksExists = await context
+                .Attacks
+                .Where(attack => (attack.Attacker.Id == sender.Id && attack.Attacked.Id == receiver.Id) ||
+                                 (attack.Attacked.Id == sender.Id && attack.Attacker.Id == receiver.Id))
+                .AnyAsync(attack => attack.Type != AttackType.None && !attack.IsRelogged);
+
+            if (activeAttacksExists)
+            {
+                return Ok(new {status = 503, message = "Preventing attack..."});
+            }
+
             if (sender == null || receiver == null)
             {
-                return StatusCode(StatusCodes.Status400BadRequest,
-                    new {Message = "Sender or receiver not found in request"});
+                return Ok(new {status = 400, message = "Sender or receiver not found in request"});
+            }
+
+            string messageContent = messageModel.Content;
+
+            AttackType attackType = AttackType.None;
+
+            if (DefenceService.IsXssAttack(messageContent))
+            {
+                messageContent = "Potential XSS attack...";
+                attackType = AttackType.Xss;
+            }
+            else if (DefenceService.IsSqlInjectionAttack(messageContent))
+            {
+                messageContent = "Potential SQL Injection attack...";
+                attackType = AttackType.SqlInjection;
+            }
+            else if (await DefenceService.IsDdosAttack(receiver))
+            {
+                messageContent = "Potential DOS attack...";
+                attackType = AttackType.Ddos;
+            }
+
+            if (attackType != AttackType.None)
+            {
+                Attack attack = new Attack
+                {
+                    Attacker = sender,
+                    Attacked = receiver,
+                    DateTime = DateTime.Now,
+                    IsRelogged = false,
+                    Type = attackType
+                };
+
+                await context.Attacks.AddAsync(attack);
             }
 
             Message message = new Message
             {
-                Content = messageModel.Content,
+                Content = messageContent,
                 DateTimeStamp = DateTime.Now,
                 Sender = sender,
                 Receiver = receiver,
@@ -162,15 +202,7 @@ namespace InternetSecurityProject.Controllers
             await context.Messages.AddAsync(message);
             await context.SaveChangesAsync();
 
-            return Ok(message);
-        }
-
-        [Route("{id}")]
-        [HttpGet]
-        public IEnumerable<int> GetById(int id)
-        {
-            Random random = new Random();
-            return Enumerable.Range(0, id).Select(index => random.Next(0, 10));
+            return Ok(new {status = 200, data = message});
         }
     }
 }

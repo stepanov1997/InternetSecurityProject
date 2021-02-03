@@ -17,8 +17,8 @@ namespace InternetSecurityProject.Services
         
         public static bool IsSqlInjectionAttack(string message)
         {
-            return Regex.IsMatch(message, "'(''|[^'])*'") ||
-                   Regex.IsMatch(message, "\b(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}|INSERT( +INTO){0,1}|MERGE|SELECT|UPDATE|UNION( +ALL){0,1})\b");
+            return Regex.IsMatch(message, @"\s*'\s*(''|[^'])*") ||
+                   Regex.IsMatch(message, @"\b\s*(ALTER|CREATE|DELETE|DROP|EXEC(UTE){0,1}\s*|\s*INSERT( +INTO){0,1}\s*|MERGE|SELECT|UPDATE|UNION( +ALL){0,1}\s*)\s*\b\s*");
         }
         
         public static async Task<bool> IsDdosAttack(User user)

@@ -61,9 +61,18 @@ namespace InternetSecurityProject.Services
         public static async Task<object> LoginUserPart2(UserViewModel userModel, JWTSettings jwtSettings, EmailSettings emailSettings)
         {
             Context context = new Context();
+
             User found = await context.Users.FirstOrDefaultAsync(u => u.Token == userModel.Token);
             if (found==null) return "Invalid token.";
 
+            await context
+                .Attacks
+                .Where(attack => attack.Attacked.Token == userModel.Token)
+                .ForEachAsync(attack =>
+                {
+                    attack.IsRelogged = true;
+                });
+            
             Tfa tfa = await context.Tfas.FirstOrDefaultAsync(tfa => tfa.User.Username == found.Username);
             if (tfa == null || !(tfa.IsPasswordOk && tfa.IsCertificateOk))
             {
