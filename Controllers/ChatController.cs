@@ -66,10 +66,12 @@ namespace InternetSecurityProject.Controllers
                 return Ok(new {status = 401, message = "Token is expired or doesn't exist."});
             }
 
-            return Ok((await new Context().Users.ToListAsync()).Where(x => !x.IsUserActive()).Select(x => new
+            return Ok(new
             {
-                username = x.Username
-            }));
+                status = 200,
+                data = (await new Context().Users.ToListAsync()).Where(x => !x.IsUserActive()).Select(x =>
+                    new {username = x.Username})
+            });
         }
 
         [Authorize]

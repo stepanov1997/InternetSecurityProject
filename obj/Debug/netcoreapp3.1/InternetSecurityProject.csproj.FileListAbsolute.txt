@@ -99,3 +99,4 @@ C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Micr
 C:\Users\stepa\source\repos\InternetSecurityProject\obj\Debug\netcoreapp3.1\InternetSecurityProject.csprojAssemblyReference.cache
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Server.Kestrel.Https.dll
 C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\Microsoft.AspNetCore.Server.Kestrel.Transport.Abstractions.dll
+C:\Users\stepa\source\repos\InternetSecurityProject\bin\Debug\netcoreapp3.1\BCrypt.Net-Next.dll

@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
+using Org.BouncyCastle.Crypto.Generators;
 
 namespace InternetSecurityProject.Services
 {
@@ -22,7 +23,7 @@ namespace InternetSecurityProject.Services
             }
 
             Context context = new Context();
-            User found = await context.Users.FirstOrDefaultAsync(u => u.Username == userModel.Username && u.Password==userModel.Password);
+            User found = (await context.Users.ToListAsync()).FirstOrDefault(u => u.Username == userModel.Username && BCrypt.Net.BCrypt.Verify(userModel.Password, u.Password));
             if (found==null) return "User with that username does not exists.";
 
             found.Token = GenerateAccessToken(found.Id, jwtSettings);
@@ -115,6 +116,7 @@ namespace InternetSecurityProject.Services
             if (exists) return "User with that username already exists.";
 
             User user = userModel.MapToUser();
+            user.Password = BCrypt.Net.BCrypt.HashPassword(user.Password);
             user.Token = GenerateAccessToken(user.Id, jwtSettings);
             user.TokenCreatedDate = DateTime.Now;
             user.TokenExpires = 15;

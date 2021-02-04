@@ -17,7 +17,7 @@ namespace InternetSecurityProject.Services
         public static async Task<List<Certificate>> GetAllCertificates()
         {
             Context context = new Context();
-            return await context.Certificates.ToListAsync();
+            return await context.Certificates.Include(b => b.User).ToListAsync();
         }
 
         public static async Task<Certificate> GenerateCertificateForUser(string username, CertsSettings certsSettings)

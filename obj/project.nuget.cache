@@ -1,9 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "CQNtN6oKq0mSeH1a4c4DIunqdNJbKuy3XexmfDHI0dbutzQVkNzMy8bK6IHmlm6BiyLmxvxuH7rgQnXITDEQLw==",
+  "dgSpecHash": "CchoWXhtZvJO3x2b/KLhooIY97n+Ijf84V67sHwiyp/HEfddBzidliBfBJSMndkBdGX6gKatA89lrWp8C+O6CA==",
   "success": true,
   "projectFilePath": "C:\\Users\\stepa\\source\\repos\\InternetSecurityProject\\InternetSecurityProject.csproj",
   "expectedPackageFiles": [
+    "C:\\Users\\stepa\\.nuget\\packages\\bcrypt.net-next\\4.0.2\\bcrypt.net-next.4.0.2.nupkg.sha512",
     "C:\\Users\\stepa\\.nuget\\packages\\humanizer.core\\2.8.26\\humanizer.core.2.8.26.nupkg.sha512",
     "C:\\Users\\stepa\\.nuget\\packages\\mailkit\\2.10.1\\mailkit.2.10.1.nupkg.sha512",
     "C:\\Users\\stepa\\.nuget\\packages\\microsoft.aspnetcore.authentication.certificate\\3.1.11\\microsoft.aspnetcore.authentication.certificate.3.1.11.nupkg.sha512",

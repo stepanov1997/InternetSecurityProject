@@ -37,7 +37,7 @@ namespace InternetSecurityProject.Services
 
         public static bool SendToken(User user, EmailSettings emailSettings)
         {
-            string subject = "InternetSecurityProject - sertifikat";
+            string subject = "InternetSecurityProject - token";
             string body = @$"
                 <h1>Pozdrav, {user.Username}!</h1><br>
                 <br>
